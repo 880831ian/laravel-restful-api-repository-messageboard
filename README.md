@@ -1,5 +1,7 @@
 
-本程式為 [Laravel 進階 (內建會員系統、驗證 RESTful API 是否登入、使用 Repository 設計模式) ](https://pin-yi.me/laravel-advanced) 範例檔案，請先參閱該文章><
+本程式為 [Laravel 進階 (內建會員系統、驗證 RESTful API 是否登入、使用 Repository 設計模式) ](https://pin-yi.me/laravel-advanced) 範例檔案
+
+請先參閱該文章，有任何問題歡迎留言給我歐！
 
 #### Migration
 
@@ -528,7 +530,7 @@ use Illuminate\Support\Facades\Validator;
 
 ##### 登入
 
-![圖片](https://raw.githubusercontent.com/880831ian/laravel-restful-api-messageboard/master/images/login.png.png)
+![圖片](https://raw.githubusercontent.com/880831ian/laravel-restful-api-messageboard/master/images/login.png)
 
 <br> 
 
