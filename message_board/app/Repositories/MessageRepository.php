@@ -41,7 +41,7 @@ class MessageRepository
             ->groupBy('id')
             ->get()
             ->where('id', $id)
-            ->toArray();
+            ->first();
     }
 
     public static function createMessage($id, $content)

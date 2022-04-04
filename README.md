@@ -176,7 +176,7 @@ Middleware created successfully.
 
 <br>
 
-##### Route
+#### Route
 
 接下來，我們要把我們設定好的 `ApiAuth` 設定在 `route\api.php` 的路由中，
 ```php
@@ -191,7 +191,7 @@ Route::delete('message/{id}', 'MessageController@delete')->middleware('api.auth'
 
 <br>
 
-##### Model
+#### Model
 
 因為我們在取得資料時，不希望顯示 `deleted_at` 給使用者，所以在 `app\Models\Message.php` 這個 model 裡面用 `hidden` 來做設定。
 
@@ -244,7 +244,7 @@ class Like extends Model
 
 <br>
 
-##### Repository
+#### Repository
 
 還記得我們上次把 RESTful API 要處理的邏輯都寫在 Controller 裡面嗎，我們光是一個小功能就讓整個 Controller 變得肥大，在後續維護時或是新增功能時，會導致十分不便利，因此我們要將 Repository 設計模式 給導入，那要怎麼實作呢～
 
@@ -300,7 +300,7 @@ use App\Models\Like;
             ->groupBy('id')
             ->get()
             ->where('id', $id)
-            ->toArray();
+            ->first();
     }
 ```
 回傳全部的留言資料 `getAllMessage()`，由於我們想要顯示留言者 id，只能一個一個把我們想要的 select 出來，不能透過 model 來顯示，使用 leftjoin 來查詢，最後多一個來顯示各個文章的總數。
@@ -373,7 +373,7 @@ use App\Models\Like;
 <br>
 
 
-##### Controller
+#### Controller
 
 到這裡我們講完 `MessageRepository.php` 的內容了，那原本的 Controller 剩下什麼呢 !?
 
@@ -424,10 +424,10 @@ use Illuminate\Support\Facades\Validator;
     {
         $user = Auth::user();
 
-        $rules = ['content' => 'max:20'];
+        $rules = ['content' => 'required|max:20'];
         $validator = Validator::make($request->all(), $rules);
         if ($validator->fails()) {
-            return response()->json(["message" => "內容長度超過20個字元"], 400);
+            return response()->json(["message" => "沒有輸入內容或長度超過20個字元"], 400);
         }
 
         MessageRepository::createMessage($user->id, $request->content);
@@ -451,22 +451,15 @@ use Illuminate\Support\Facades\Validator;
             return response()->json(["message" => "找不到留言"], 404);
         }
 
-        $rules = ['content' => 'max:20'];
+        $rules = ['content' => 'required|max:20'];
         $validator = Validator::make($request->all(), $rules);
         if ($validator->fails()) {
-            return response()->json(["message" => "內容長度超過20個字元"], 400);
+            return response()->json(["message" => "沒有輸入內容或長度超過20個字元"], 400);
         }
 
-        foreach ($message as $key => $value) {
-            $user_id = $value['user_id'];
-            $version = $value['version'];
+        if (!MessageRepository::updateMessage($id, $user->id, $request->content, $message['version'])) {
+            return response()->json(["message" => "更新留言失敗"], 400);
         }
-
-        if ($user_id != $user->id) {
-            return response()->json(["message" => "權限不正確"], 403);
-        }
-
-        MessageRepository::updateMessage($id, $user->id, $request->content, $version);
         return response()->json(["message" => "修改成功"], 200);
     }
 ```
@@ -503,19 +496,9 @@ use Illuminate\Support\Facades\Validator;
     {
         $user = Auth::user();
 
-        if (!$message = MessageRepository::getMessage($id)) {
+        if (!MessageRepository::deleteMessage($id, $user->id)) {
             return response()->json(["message" => "找不到留言"], 404);
         }
-
-        foreach ($message as $key => $value) {
-            $user_id = $value['user_id'];
-        }
-
-        if ($user_id != $user->id) {
-            return response()->json(["message" => "權限不正確"], 403);
-        }
-
-        MessageRepository::deleteMessage($id, $user->id);
         return response()->json(["message" => "刪除成功,沒有返回任何內容"], 204);
     }
 ```

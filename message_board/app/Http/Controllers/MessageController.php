@@ -29,10 +29,10 @@ class MessageController extends Controller
     {
         $user = Auth::user();
 
-        $rules = ['content' => 'max:20'];
+        $rules = ['content' => 'required|max:20'];
         $validator = Validator::make($request->all(), $rules);
         if ($validator->fails()) {
-            return response()->json(["message" => "內容長度超過20個字元"], 400);
+            return response()->json(["message" => "沒有輸入內容或長度超過20個字元"], 400);
         }
 
         MessageRepository::createMessage($user->id, $request->content);
@@ -48,22 +48,15 @@ class MessageController extends Controller
             return response()->json(["message" => "找不到留言"], 404);
         }
 
-        $rules = ['content' => 'max:20'];
+        $rules = ['content' => 'required|max:20'];
         $validator = Validator::make($request->all(), $rules);
         if ($validator->fails()) {
-            return response()->json(["message" => "內容長度超過20個字元"], 400);
+            return response()->json(["message" => "沒有輸入內容或長度超過20個字元"], 400);
         }
 
-        foreach ($message as $key => $value) {
-            $user_id = $value['user_id'];
-            $version = $value['version'];
+        if (!MessageRepository::updateMessage($id, $user->id, $request->content, $message['version'])) {
+            return response()->json(["message" => "更新留言失敗"], 400);
         }
-
-        if ($user_id != $user->id) {
-            return response()->json(["message" => "權限不正確"], 403);
-        }
-
-        MessageRepository::updateMessage($id, $user->id, $request->content, $version);
         return response()->json(["message" => "修改成功"], 200);
     }
 
@@ -85,19 +78,9 @@ class MessageController extends Controller
     {
         $user = Auth::user();
 
-        if (!$message = MessageRepository::getMessage($id)) {
+        if (!MessageRepository::deleteMessage($id, $user->id)) {
             return response()->json(["message" => "找不到留言"], 404);
         }
-
-        foreach ($message as $key => $value) {
-            $user_id = $value['user_id'];
-        }
-
-        if ($user_id != $user->id) {
-            return response()->json(["message" => "權限不正確"], 403);
-        }
-
-        MessageRepository::deleteMessage($id, $user->id);
         return response()->json(["message" => "刪除成功,沒有返回任何內容"], 204);
     }
 }
